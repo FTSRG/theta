@@ -561,14 +561,13 @@ final class XcfaExpression {
 
 		@Override
 		public IntLitExpr visitIntLitExpr(final IntLitExprContext ctx) {
-			final int value = Integer.parseInt(ctx.value.getText());
-			return Int(value);
+			return Int(ctx.value.getText());
 		}
 
 		@Override
 		public RatLitExpr visitRatLitExpr(final RatLitExprContext ctx) {
-			final int num = Integer.parseInt(ctx.num.getText());
-			final int denom = Integer.parseInt(ctx.denom.getText());
+			final int num = Int(ctx.num.getText());
+			final int denom = Int(ctx.denom.getText());
 			return Rat(num, denom);
 		}
 
