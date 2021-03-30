@@ -8,4 +8,5 @@ dependencies {
     compile(project(":theta-common"))
     compile(project(":theta-core"))
     testImplementation(project(":theta-solver-z3"))
+    testImplementation(project(":theta-solver-smtlib"))
 }

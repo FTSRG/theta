@@ -15,25 +15,6 @@
  */
 package hu.bme.mit.theta.sts.analysis;
 
-import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
-import static hu.bme.mit.theta.core.decl.Decls.Var;
-import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
-import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-import java.util.function.Predicate;
-
-import hu.bme.mit.theta.analysis.expr.refinement.*;
-import org.junit.Test;
-
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
 import hu.bme.mit.theta.analysis.State;
@@ -52,6 +33,12 @@ import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.VarsRefutation;
 import hu.bme.mit.theta.analysis.waitlist.PriorityWaitlist;
 import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
@@ -59,10 +46,28 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
+import org.junit.Test;
+
+import java.util.Collections;
+import java.util.function.Predicate;
+
+import static hu.bme.mit.theta.analysis.algorithm.ArgUtils.isWellLabeled;
+import static hu.bme.mit.theta.core.decl.Decls.Var;
+import static hu.bme.mit.theta.core.type.anytype.Exprs.Prime;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.And;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Imply;
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Add;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Eq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Geq;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Int;
+import static hu.bme.mit.theta.core.type.inttype.IntExprs.Lt;
+import static org.junit.Assert.assertTrue;
 
 public class StsExplTest {
 
@@ -89,10 +94,11 @@ public class StsExplTest {
 
 		final STS sts = builder.build();
 
-		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
+		final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
+		final UCSolver refinementSolver = Z3SolverFactory.getInstance().createUCSolver();
 
-		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, sts.getInit());
-		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
+		final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(abstractionSolver, sts.getInit());
+		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), abstractionSolver);
 
 		final ExplPrec prec = ExplPrec.of(Collections.singleton(vy));
 
@@ -104,7 +110,7 @@ public class StsExplTest {
 				.waitlist(PriorityWaitlist.create(ArgNodeComparators.bfs())).logger(logger).build();
 
 		final ExprTraceChecker<VarsRefutation> exprTraceChecker = ExprTraceUnsatCoreChecker.create(sts.getInit(),
-				Not(sts.getProp()), solver);
+				Not(sts.getProp()), refinementSolver);
 
 		final SingleExprTraceRefiner<ExplState, StsAction, ExplPrec, VarsRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker, JoiningPrecRefiner.create(new VarsRefToExplPrec()), PruneStrategy.LAZY, logger);
@@ -114,7 +120,7 @@ public class StsExplTest {
 		final SafetyResult<ExplState, StsAction> safetyStatus = checker.check(prec);
 
 		final ARG<ExplState, StsAction> arg = safetyStatus.getArg();
-		assertTrue(isWellLabeled(arg, solver));
+		assertTrue(isWellLabeled(arg, abstractionSolver));
 
 		// System.out.println(new
 		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

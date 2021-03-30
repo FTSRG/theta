@@ -20,7 +20,7 @@ import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.SpState;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.core.utils.WpState;
-import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
@@ -45,18 +45,18 @@ import static java.util.stream.Collectors.toList;
  */
 public class ExprTraceUCBChecker implements ExprTraceChecker<ItpRefutation>  {
 
-    private final Solver solver;
+    private final UCSolver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
 
-    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver) {
+    private ExprTraceUCBChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
         this.solver = checkNotNull(solver);
         this.init = checkNotNull(init);
         this.target = checkNotNull(target);
     }
 
     public static ExprTraceUCBChecker create(
-        final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver
+        final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver
     ) {
         return new ExprTraceUCBChecker(init, target, solver);
     }

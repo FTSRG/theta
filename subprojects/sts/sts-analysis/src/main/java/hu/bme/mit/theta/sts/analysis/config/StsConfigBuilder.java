@@ -15,10 +15,6 @@
  */
 package hu.bme.mit.theta.sts.analysis.config;
 
-import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
-
-import java.util.function.Predicate;
-
 import hu.bme.mit.theta.analysis.Action;
 import hu.bme.mit.theta.analysis.Analysis;
 import hu.bme.mit.theta.analysis.LTS;
@@ -42,7 +38,16 @@ import hu.bme.mit.theta.analysis.expl.VarsRefToExplPrec;
 import hu.bme.mit.theta.analysis.expr.ExprAction;
 import hu.bme.mit.theta.analysis.expr.ExprState;
 import hu.bme.mit.theta.analysis.expr.ExprStatePredicate;
-import hu.bme.mit.theta.analysis.expr.refinement.*;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceBwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceFwBinItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceSeqItpChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ExprTraceUnsatCoreChecker;
+import hu.bme.mit.theta.analysis.expr.refinement.ItpRefutation;
+import hu.bme.mit.theta.analysis.expr.refinement.JoiningPrecRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.MultiExprTraceRefiner;
+import hu.bme.mit.theta.analysis.expr.refinement.PruneStrategy;
+import hu.bme.mit.theta.analysis.expr.refinement.SingleExprTraceRefiner;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters;
 import hu.bme.mit.theta.analysis.pred.ExprSplitters.ExprSplitter;
 import hu.bme.mit.theta.analysis.pred.ItpRefToPredPrec;
@@ -56,7 +61,7 @@ import hu.bme.mit.theta.common.logging.Logger;
 import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.booltype.BoolType;
-import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import hu.bme.mit.theta.solver.SolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.analysis.StsAction;
@@ -64,6 +69,10 @@ import hu.bme.mit.theta.sts.analysis.StsLts;
 import hu.bme.mit.theta.sts.analysis.initprec.StsEmptyInitPrec;
 import hu.bme.mit.theta.sts.analysis.initprec.StsInitPrec;
 import hu.bme.mit.theta.sts.analysis.initprec.StsPropInitPrec;
+
+import java.util.function.Predicate;
+
+import static hu.bme.mit.theta.core.type.booltype.BoolExprs.Not;
 
 public final class StsConfigBuilder {
 
@@ -154,14 +163,14 @@ public final class StsConfigBuilder {
 	}
 
 	public StsConfig<? extends State, ? extends Action, ? extends Prec> build(final STS sts) {
-		final ItpSolver solver = solverFactory.createItpSolver();
 		final LTS<State, StsAction> lts = StsLts.create(sts);
 		final Expr<BoolType> init = sts.getInit();
 		final Expr<BoolType> negProp = Not(sts.getProp());
 
 		if (domain == Domain.EXPL) {
-			final Predicate<ExplState> target = new ExplStatePredicate(negProp, solver);
-			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(solver, init);
+			final Solver analysisSolver = solverFactory.createSolver();
+			final Predicate<ExplState> target = new ExplStatePredicate(negProp, analysisSolver);
+			final Analysis<ExplState, ExprAction, ExplPrec> analysis = ExplAnalysis.create(analysisSolver, init);
 			final ArgBuilder<ExplState, StsAction, ExplPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
 					true);
 			final Abstractor<ExplState, StsAction, ExplPrec> abstractor = BasicAbstractor.builder(argBuilder)
@@ -174,23 +183,23 @@ public final class StsConfigBuilder {
 
 			switch (refinement) {
 				case FW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(init, negProp, solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceFwBinItpChecker.create(init, negProp, solverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case BW_BIN_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(init, negProp, solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceBwBinItpChecker.create(init, negProp, solverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case SEQ_ITP:
-					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case MULTI_SEQ:
-					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solver),
+					refiner = MultiExprTraceRefiner.create(ExprTraceSeqItpChecker.create(init, negProp, solverFactory.createItpSolver()),
 							JoiningPrecRefiner.create(new ItpRefToExplPrec()), pruneStrategy, logger);
 					break;
 				case UNSAT_CORE:
-					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solver),
+					refiner = SingleExprTraceRefiner.create(ExprTraceUnsatCoreChecker.create(init, negProp, solverFactory.createUCSolver()),
 							JoiningPrecRefiner.create(new VarsRefToExplPrec()), pruneStrategy, logger);
 					break;
 				default:
@@ -204,22 +213,23 @@ public final class StsConfigBuilder {
 			return StsConfig.create(checker, prec);
 
 		} else if (domain == Domain.PRED_BOOL || domain == Domain.PRED_CART || domain == Domain.PRED_SPLIT) {
+			final Solver analysisSolver = solverFactory.createSolver();
 			PredAbstractor predAbstractor = null;
 			switch (domain) {
 				case PRED_BOOL:
-					predAbstractor = PredAbstractors.booleanAbstractor(solver);
+					predAbstractor = PredAbstractors.booleanAbstractor(analysisSolver);
 					break;
 				case PRED_SPLIT:
-					predAbstractor = PredAbstractors.booleanSplitAbstractor(solver);
+					predAbstractor = PredAbstractors.booleanSplitAbstractor(analysisSolver);
 					break;
 				case PRED_CART:
-					predAbstractor = PredAbstractors.cartesianAbstractor(solver);
+					predAbstractor = PredAbstractors.cartesianAbstractor(analysisSolver);
 					break;
 				default:
 					throw new UnsupportedOperationException(domain + " domain is not supported.");
 			}
-			final Predicate<ExprState> target = new ExprStatePredicate(negProp, solver);
-			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver, predAbstractor,
+			final Predicate<ExprState> target = new ExprStatePredicate(negProp, analysisSolver);
+			final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(analysisSolver, predAbstractor,
 					init);
 			final ArgBuilder<PredState, StsAction, PredPrec> argBuilder = ArgBuilder.create(lts, analysis, target,
 					true);
@@ -232,16 +242,16 @@ public final class StsConfigBuilder {
 			ExprTraceChecker<ItpRefutation> exprTraceChecker = null;
 			switch (refinement) {
 				case FW_BIN_ITP:
-					exprTraceChecker = ExprTraceFwBinItpChecker.create(init, negProp, solver);
+					exprTraceChecker = ExprTraceFwBinItpChecker.create(init, negProp, solverFactory.createItpSolver());
 					break;
 				case BW_BIN_ITP:
-					exprTraceChecker = ExprTraceBwBinItpChecker.create(init, negProp, solver);
+					exprTraceChecker = ExprTraceBwBinItpChecker.create(init, negProp, solverFactory.createItpSolver());
 					break;
 				case SEQ_ITP:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
+					exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solverFactory.createItpSolver());
 					break;
 				case MULTI_SEQ:
-					exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solver);
+					exprTraceChecker = ExprTraceSeqItpChecker.create(init, negProp, solverFactory.createItpSolver());
 					break;
 				default:
 					throw new UnsupportedOperationException(

@@ -21,6 +21,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import hu.bme.mit.theta.solver.Solver;
 import org.junit.Test;
 
 import hu.bme.mit.theta.analysis.algorithm.ARG;
@@ -44,10 +45,11 @@ public final class CfaPredImpactCheckerTest {
 		// Arrange
 		final CFA cfa = CfaDslManager.createCfa(new FileInputStream("src/test/resources/counter5_true.cfa"));
 
-		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
+		final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
+		final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
 
 		final PredImpactChecker checker = PredImpactChecker.create(CfaLbeLts.of(cfa.getErrorLoc().get()), cfa.getInitLoc(),
-				l -> l.equals(cfa.getErrorLoc().get()), solver);
+				l -> l.equals(cfa.getErrorLoc().get()), abstractionSolver, refinementSolver);
 
 		// Act
 		final SafetyResult<? extends ExprState, ? extends ExprAction> status = checker.check(UnitPrec.getInstance());
@@ -58,7 +60,7 @@ public final class CfaPredImpactCheckerTest {
 		final ARG<? extends ExprState, ? extends ExprAction> arg = status.getArg();
 		arg.minimize();
 
-		final ArgChecker argChecker = ArgChecker.create(solver);
+		final ArgChecker argChecker = ArgChecker.create(abstractionSolver);
 		assertTrue(argChecker.isWellLabeled(arg));
 
 		System.out.println(GraphvizWriter.getInstance().writeString(ArgVisualizer.getDefault().visualize(arg)));

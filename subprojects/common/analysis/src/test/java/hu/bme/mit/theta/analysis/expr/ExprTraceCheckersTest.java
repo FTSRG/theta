@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import hu.bme.mit.theta.solver.UCSolver;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,12 +56,13 @@ public final class ExprTraceCheckersTest {
 
 	@Before
 	public void before() {
-		final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
+		final ItpSolver itpSolver = Z3SolverFactory.getInstance().createItpSolver();
+		final UCSolver ucSolver = Z3SolverFactory.getInstance().createUCSolver();
 		traceCheckers = new ArrayList<>();
-		traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), solver));
-		traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), solver));
-		traceCheckers.add(ExprTraceBwBinItpChecker.create(True(), True(), solver));
-		traceCheckers.add(ExprTraceUnsatCoreChecker.create(True(), True(), solver));
+		traceCheckers.add(ExprTraceSeqItpChecker.create(True(), True(), itpSolver));
+		traceCheckers.add(ExprTraceFwBinItpChecker.create(True(), True(), itpSolver));
+		traceCheckers.add(ExprTraceBwBinItpChecker.create(True(), True(), itpSolver));
+		traceCheckers.add(ExprTraceUnsatCoreChecker.create(True(), True(), ucSolver));
 	}
 
 	@Test

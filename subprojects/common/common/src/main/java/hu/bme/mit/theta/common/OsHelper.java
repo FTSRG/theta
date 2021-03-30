@@ -24,7 +24,7 @@ public final class OsHelper {
 	}
 
 	public enum OperatingSystem {
-		WINDOWS, LINUX
+		WINDOWS, LINUX, MAC
 	}
 
 	public static OperatingSystem getOs() {
@@ -35,12 +35,31 @@ public final class OsHelper {
 			return OperatingSystem.LINUX;
 		} else if (os.toLowerCase().startsWith("windows")) {
 			return OperatingSystem.WINDOWS;
+		} else if ((os.toLowerCase().contains("mac")) || (os.toLowerCase().contains("darwin"))) {
+			return OperatingSystem.MAC;
 		} else {
 			throw new UnsupportedOperationException("Operating system \"" + os + "\" not supported.");
 		}
 	}
 
+	public enum Architecture {
+		X86, X64
+	}
+
+	public static Architecture getArch() {
+		final String arch = StandardSystemProperty.OS_ARCH.value();
+
+		if (arch.toLowerCase().equals("x86")) {
+			return Architecture.X86;
+		} else if (arch.toLowerCase().equals("amd64")) {
+			return Architecture.X64;
+		} else {
+			throw new UnsupportedOperationException("Architecture \"" + arch + "\" not supported.");
+		}
+	}
+
 	public static void main(final String[] args) {
 		System.out.println(getOs());
+		System.out.println(getArch());
 	}
 }

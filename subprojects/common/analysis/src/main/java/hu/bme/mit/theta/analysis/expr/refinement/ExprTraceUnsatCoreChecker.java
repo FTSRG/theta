@@ -33,7 +33,7 @@ import hu.bme.mit.theta.core.utils.ExprUtils;
 import hu.bme.mit.theta.core.utils.IndexedVars;
 import hu.bme.mit.theta.core.utils.PathUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
-import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 /**
@@ -42,18 +42,18 @@ import hu.bme.mit.theta.solver.utils.WithPushPop;
  */
 public final class ExprTraceUnsatCoreChecker implements ExprTraceChecker<VarsRefutation> {
 
-	private final Solver solver;
+	private final UCSolver solver;
 	private final Expr<BoolType> init;
 	private final Expr<BoolType> target;
 
-	private ExprTraceUnsatCoreChecker(final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver) {
+	private ExprTraceUnsatCoreChecker(final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver) {
 		this.solver = checkNotNull(solver);
 		this.init = checkNotNull(init);
 		this.target = checkNotNull(target);
 	}
 
 	public static ExprTraceUnsatCoreChecker create(final Expr<BoolType> init, final Expr<BoolType> target,
-												   final Solver solver) {
+												   final UCSolver solver) {
 		return new ExprTraceUnsatCoreChecker(init, target, solver);
 	}
 

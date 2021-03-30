@@ -4,8 +4,11 @@ include(
         "common/analysis",
         "common/common",
         "common/core",
-        "common/solver",
-        "common/solver-z3",
+
+        "solver/solver",
+        "solver/solver-z3",
+        "solver/solver-smtlib",
+        "solver/solver-smtlib-cli",
 
         "cfa/cfa",
         "cfa/cfa-analysis",

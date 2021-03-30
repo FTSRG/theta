@@ -33,6 +33,7 @@ import hu.bme.mit.theta.core.utils.StmtUtils;
 import hu.bme.mit.theta.core.utils.VarIndexing;
 import hu.bme.mit.theta.core.utils.WpState;
 import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.UCSolver;
 import hu.bme.mit.theta.solver.utils.WithPushPop;
 
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ import static java.util.stream.Collectors.toUnmodifiableMap;
 public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private enum AssertionGeneratorMethod { SP, WP }
 
-    private final Solver solver;
+    private final UCSolver solver;
     private final Expr<BoolType> init;
     private final Expr<BoolType> target;
 
@@ -71,7 +72,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     private final boolean LV; // Whether to project the assertions to live variables
 
     private ExprTraceNewtonChecker(
-        final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver,
+        final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver,
         boolean it, AssertionGeneratorMethod sPorWP, boolean lv
     ) {
         this.solver = checkNotNull(solver);
@@ -83,7 +84,7 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static ExprTraceNewtonCheckerITBuilder create(
-        final Expr<BoolType> init, final Expr<BoolType> target, final Solver solver
+        final Expr<BoolType> init, final Expr<BoolType> target, final UCSolver solver
     ) {
         return new ExprTraceNewtonCheckerITBuilder(solver, init, target);
     }
@@ -574,11 +575,11 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
      */
 
     public static class ExprTraceNewtonCheckerITBuilder {
-        private final Solver solver;
+        private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
-        public ExprTraceNewtonCheckerITBuilder(Solver solver, Expr<BoolType> init, Expr<BoolType> target) {
+        public ExprTraceNewtonCheckerITBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -594,13 +595,13 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static class ExprTraceNewtonCheckerAssertBuilder {
-        private final Solver solver;
+        private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
         private final boolean IT;
 
-        public ExprTraceNewtonCheckerAssertBuilder(Solver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it) {
+        public ExprTraceNewtonCheckerAssertBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it) {
             this.solver = solver;
             this.init = init;
             this.target = target;
@@ -617,14 +618,14 @@ public class ExprTraceNewtonChecker implements ExprTraceChecker<ItpRefutation> {
     }
 
     public static class ExprTraceNewtonCheckerLVBuilder {
-        private final Solver solver;
+        private final UCSolver solver;
         private final Expr<BoolType> init;
         private final Expr<BoolType> target;
 
         private final boolean IT;
         private final AssertionGeneratorMethod SPorWP;
 
-        public ExprTraceNewtonCheckerLVBuilder(Solver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it, AssertionGeneratorMethod sPorWP) {
+        public ExprTraceNewtonCheckerLVBuilder(UCSolver solver, Expr<BoolType> init, Expr<BoolType> target, boolean it, AssertionGeneratorMethod sPorWP) {
             this.solver = solver;
             this.init = init;
             this.target = target;

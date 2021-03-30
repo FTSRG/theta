@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
@@ -59,6 +60,8 @@ import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.solver.SolverFactory;
+import hu.bme.mit.theta.solver.smtlib.SmtLibSolverManager;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -82,6 +85,18 @@ public class CfaCli {
 
 	@Parameter(names = "--predsplit", description = "Predicate splitting (for predicate abstraction)")
 	PredSplit predSplit = PredSplit.WHOLE;
+
+	@Parameter(names = "--solver", description = "Sets the underlying SMT solver to use for both the abstraction and the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+	String solver = "Z3";
+
+	@Parameter(names = "--abstraction-solver", description = "Sets the underlying SMT solver to use for the abstraction process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+	String abstractionSolver;
+
+	@Parameter(names = "--refinement-solver", description = "Sets the underlying SMT solver to use for the refinement process. Enter in format <solver_name>:<solver_version>, see theta-smtlib-cli.jar for more details. Enter \"Z3\" to use the legacy z3 solver.")
+	String refinementSolver;
+
+	@Parameter(names = "--home", description = "The path of the solver registry")
+	String home = Path.of(System.getProperty("user.home"), ".theta").toAbsolutePath().toString();
 
 	@Parameter(names = "--model", description = "Path of the input CFA model", required = true)
 	String model;
@@ -162,6 +177,9 @@ public class CfaCli {
 		}
 
 		try {
+			final var homePath = Path.of(home);
+			final var smtLibSolverManager = SmtLibSolverManager.create(homePath, logger);
+
 			final Stopwatch sw = Stopwatch.createStarted();
 			final CFA cfa = loadModel();
 
@@ -189,9 +207,36 @@ public class CfaCli {
 				}
 				checkNotNull(errLoc, "Location '" + errorLoc + "' not found in CFA");
 			}
-
 			checkNotNull(errLoc, "Error location must be specified in CFA or as argument");
-			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc);
+
+			final SolverFactory abstractionSolverFactory;
+			if(abstractionSolver != null && !abstractionSolver.equals("Z3")) {
+				final var s = abstractionSolver.split("\\.");
+				abstractionSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
+			}
+			else if(!solver.equals("Z3")) {
+				final var s = solver.split("\\.");
+				abstractionSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
+			}
+			else {
+				abstractionSolverFactory = Z3SolverFactory.getInstance();
+			}
+
+
+			final SolverFactory refinementSolverFactory;
+			if(refinementSolver != null && !refinementSolver.equals("Z3")) {
+				final var s = refinementSolver.split("\\.");
+				refinementSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
+			}
+			else if(!solver.equals("Z3")) {
+				final var s = solver.split("\\.");
+				refinementSolverFactory = smtLibSolverManager.getSolverFactory(s[0], s[1]);
+			}
+			else {
+				refinementSolverFactory = Z3SolverFactory.getInstance();
+			}
+
+			final CfaConfig<?, ?, ?> configuration = buildConfiguration(cfa, errLoc, abstractionSolverFactory, refinementSolverFactory);
 			final SafetyResult<?, ?> status = check(configuration);
 			sw.stop();
 			printResult(status, sw.elapsed(TimeUnit.MILLISECONDS));
@@ -220,9 +265,9 @@ public class CfaCli {
 		}
 	}
 
-	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc) throws Exception {
+	private CfaConfig<?, ?, ?> buildConfiguration(final CFA cfa, final CFA.Loc errLoc, final SolverFactory abstractionSolverFactory, final SolverFactory refinementSolverFactory) throws Exception {
 		try {
-			return new CfaConfigBuilder(domain, refinement, Z3SolverFactory.getInstance())
+			return new CfaConfigBuilder(domain, refinement, abstractionSolverFactory, refinementSolverFactory)
 					.precGranularity(precGranularity).search(search)
 					.predSplit(predSplit).encoding(encoding).maxEnum(maxEnum).initPrec(initPrec)
 					.pruneStrategy(pruneStrategy).logger(logger).build(cfa, errLoc);

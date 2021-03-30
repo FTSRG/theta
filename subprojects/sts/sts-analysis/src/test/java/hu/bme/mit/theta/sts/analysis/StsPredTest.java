@@ -31,6 +31,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.function.Predicate;
 
 import hu.bme.mit.theta.analysis.expr.refinement.*;
+import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -59,14 +61,14 @@ import hu.bme.mit.theta.common.logging.Logger.Level;
 import hu.bme.mit.theta.core.decl.VarDecl;
 import hu.bme.mit.theta.core.type.Expr;
 import hu.bme.mit.theta.core.type.inttype.IntType;
-import hu.bme.mit.theta.solver.ItpSolver;
 import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.sts.STS;
 import hu.bme.mit.theta.sts.STS.Builder;
 
 public class StsPredTest {
 	final Logger logger = new ConsoleLogger(Level.VERBOSE);
-	final ItpSolver solver = Z3SolverFactory.getInstance().createItpSolver();
+	final Solver abstractionSolver = Z3SolverFactory.getInstance().createSolver();
+	final ItpSolver refinementSolver = Z3SolverFactory.getInstance().createItpSolver();
 	STS sts = null;
 
 	@Before
@@ -87,9 +89,9 @@ public class StsPredTest {
 	@Test
 	public void testPredPrec() {
 
-		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(solver,
-				PredAbstractors.booleanSplitAbstractor(solver), sts.getInit());
-		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), solver);
+		final Analysis<PredState, ExprAction, PredPrec> analysis = PredAnalysis.create(abstractionSolver,
+				PredAbstractors.booleanSplitAbstractor(abstractionSolver), sts.getInit());
+		final Predicate<ExprState> target = new ExprStatePredicate(Not(sts.getProp()), abstractionSolver);
 
 		final PredPrec prec = PredPrec.of();
 
@@ -101,7 +103,7 @@ public class StsPredTest {
 				.build();
 
 		final ExprTraceChecker<ItpRefutation> exprTraceChecker = ExprTraceFwBinItpChecker.create(sts.getInit(),
-				Not(sts.getProp()), solver);
+				Not(sts.getProp()), refinementSolver);
 
 		final SingleExprTraceRefiner<PredState, StsAction, PredPrec, ItpRefutation> refiner = SingleExprTraceRefiner
 				.create(exprTraceChecker, JoiningPrecRefiner.create(new ItpRefToPredPrec(ExprSplitters.atoms())),
@@ -113,7 +115,7 @@ public class StsPredTest {
 		System.out.println(safetyStatus);
 
 		final ARG<PredState, StsAction> arg = safetyStatus.getArg();
-		assertTrue(isWellLabeled(arg, solver));
+		assertTrue(isWellLabeled(arg, abstractionSolver));
 
 		// System.out.println(new
 		// GraphvizWriter().writeString(ArgVisualizer.visualize(arg)));

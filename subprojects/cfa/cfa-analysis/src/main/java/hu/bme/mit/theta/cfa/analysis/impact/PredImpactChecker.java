@@ -40,19 +40,22 @@ import hu.bme.mit.theta.cfa.analysis.CfaPrec;
 import hu.bme.mit.theta.cfa.analysis.CfaState;
 import hu.bme.mit.theta.cfa.analysis.prec.GlobalCfaPrec;
 import hu.bme.mit.theta.solver.ItpSolver;
+import hu.bme.mit.theta.solver.Solver;
 
 public final class PredImpactChecker implements SafetyChecker<CfaState<PredState>, CfaAction, UnitPrec> {
 
 	private final ImpactChecker<CfaState<PredState>, CfaAction, UnitPrec> checker;
 
 	private PredImpactChecker(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts, final Loc initLoc,
-							  final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
+							  final Predicate<? super Loc> targetLocs,
+							  final Solver abstractionSolver, final ItpSolver refinementSolver) {
 		checkNotNull(lts);
 		checkNotNull(initLoc);
-		checkNotNull(solver);
+		checkNotNull(abstractionSolver);
+		checkNotNull(refinementSolver);
 
-		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(solver,
-				PredAbstractors.booleanSplitAbstractor(solver), True());
+		final Analysis<PredState, ExprAction, PredPrec> predAnalysis = PredAnalysis.create(abstractionSolver,
+				PredAbstractors.booleanSplitAbstractor(abstractionSolver), True());
 
 		final CfaPrec<PredPrec> fixedPrec = GlobalCfaPrec.create(PredPrec.of(emptySet()));
 
@@ -67,14 +70,15 @@ public final class PredImpactChecker implements SafetyChecker<CfaState<PredState
 		final ArgBuilder<CfaState<PredState>, CfaAction, UnitPrec> argBuilder = ArgBuilder.create(lts, analysis,
 				target);
 
-		final ImpactRefiner<CfaState<PredState>, CfaAction> refiner = PredImpactRefiner.create(solver);
+		final ImpactRefiner<CfaState<PredState>, CfaAction> refiner = PredImpactRefiner.create(refinementSolver);
 
 		checker = ImpactChecker.create(argBuilder, refiner, CfaState::getLoc);
 	}
 
 	public static PredImpactChecker create(final LTS<? super CfaState<PredState>, ? extends CfaAction> lts,
-										   final Loc initLoc, final Predicate<? super Loc> targetLocs, final ItpSolver solver) {
-		return new PredImpactChecker(lts, initLoc, targetLocs, solver);
+										   final Loc initLoc, final Predicate<? super Loc> targetLocs,
+										   final Solver abstractionSolver, final ItpSolver refinementSolver) {
+		return new PredImpactChecker(lts, initLoc, targetLocs, abstractionSolver, refinementSolver);
 	}
 
 	@Override
