@@ -1,0 +1,13 @@
+succ(A, B) :-
+    edge(A, B).
+
+succ(A, B) :-
+    succ(A, N),
+    edge(N, B).
+
+edge(n1, n2).
+edge(n1, n3).
+edge(n2, n4).
+edge(n4, n5).
+
+succ?

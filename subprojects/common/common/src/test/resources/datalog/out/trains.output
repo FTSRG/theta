@@ -1,0 +1,16 @@
+direct_connection(mainz,darmstadt).
+direct_connection(mainz,mainz).
+direct_connection(frankfurt,darmstadt).
+direct_connection(moscow,paris).
+direct_connection(paris,paris).
+direct_connection(heidelberg,paris).
+direct_connection(darmstadt,frankfurt).
+direct_connection(darmstadt,mainz).
+direct_connection(heidelberg,heidelberg).
+direct_connection(heidelberg,darmstadt).
+direct_connection(frankfurt,frankfurt).
+direct_connection(paris,moscow).
+direct_connection(paris,heidelberg).
+direct_connection(moscow,moscow).
+direct_connection(darmstadt,heidelberg).
+direct_connection(darmstadt,darmstadt).

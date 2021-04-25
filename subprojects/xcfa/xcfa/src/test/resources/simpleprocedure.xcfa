@@ -1,0 +1,26 @@
+main process p0 {
+    var a : int
+    main procedure mainProcedure (){
+        init loc L0
+        loc L1
+        final loc Lf
+        L0 -> L1 {
+            a := 0
+        }
+        L1 -> L1 {
+            assume not (a = 42)
+            call increment()
+        }
+        L1 -> Lf {
+            assume (a = 42)
+        }
+    }
+    procedure increment() {
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a := a + 1
+        }
+    }
+}

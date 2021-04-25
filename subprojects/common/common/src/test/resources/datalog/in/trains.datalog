@@ -1,0 +1,23 @@
+direct_connection(Place1, Place2) :- stops_in(Train, Place1, X, Y, Z), stops_in(Train, Place2, V, W, Q).
+
+train(3219,_IC).
+train(1390,_IC).
+train(1231,_IC).
+train(1232,_IC).
+train(9900,_ICE).
+train(9720,_ICE).
+
+stops_in(9720, paris, 3, 1104, 1115).
+stops_in(9720, heidelberg, 12, 832, 839).
+stops_in(9900, paris, 1, 1950, 1955).
+stops_in(9900, moscow, 8, 2353, 2358).
+stops_in(1231, mainz, 9, 1950, 1955).
+stops_in(1231, darmstadt, 7, 2030, 2035).
+stops_in(1390, frankfurt, 5, 1558, 1620).
+stops_in(1390, darmstadt, 1, 1749, 1750).
+stops_in(3219, heidelberg, 13, 1700, 1702).
+stops_in(3219, darmstadt, 2, 1800, 1802).
+stops_in(1232, darmstadt, 2, 520, 525).
+stops_in(1232, heidelberg, 12, 540, 545).
+
+direct_connection?

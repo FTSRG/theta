@@ -1,0 +1,31 @@
+var x : int (0)
+var y : int (0)
+var done : int (0)
+process p0 {
+    main procedure mainProcedure (){
+        var a : int
+        var b : int
+        var mDone : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a := 1
+            a -> x
+            b <- y
+        }
+    }
+}
+main process p1 {
+    main procedure mainProcedure (){
+        var a : int
+        init loc L0
+        final loc Lf
+        L0 -> Lf {
+            a := 1
+            a -> x
+            b <- y
+        }
+    }
+}

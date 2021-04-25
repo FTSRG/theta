@@ -15,6 +15,9 @@ include(
         "sts/sts-analysis",
         "sts/sts-cli",
 
+        "xcfa/xcfa",
+        "xcfa/xcfa-cli",
+
         "xta/xta",
         "xta/xta-analysis",
         "xta/xta-cli",

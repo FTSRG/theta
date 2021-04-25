@@ -1,0 +1,19 @@
+main process cfa {
+main procedure mainProc(){
+	var x : int (0)
+
+	init loc L0
+    loc L1
+    loc L2
+    loc L3
+    final loc END
+    error loc ERR
+
+	L0 -> L1 { x := 0 }
+    L1 -> L2 { assume x < 5 }
+    L1 -> L3 { assume not (x < 5) }
+    L2 -> L1 { x := x + 1 }
+    L3 -> END { assume x <= 5 }
+    L3 -> ERR { assume not (x <= 5) }
+}
+}

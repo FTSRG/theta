@@ -1,0 +1,37 @@
+var x : int (0)
+var y : int (0)
+process p0 {
+    main procedure mainProcedure (){
+        var a : int
+        var b : int
+
+        init loc L0
+        loc L1
+        error loc Le
+        final loc Lf
+
+        L0 -> L1 {
+            a <- x
+            b <- y
+        }
+
+        L1 -> Le {
+            assume a = 1 and b = 0
+        }
+        L1 -> Lf {
+            assume not (a = 1 and b = 0)
+        }
+    }
+}
+main process p1 {
+    main procedure mainProcedure (){
+        var a : int
+        init loc L0
+        final loc Lf
+        L0 -> Lf {
+            a := 1
+            a -> x
+            a -> x
+        }
+    }
+}

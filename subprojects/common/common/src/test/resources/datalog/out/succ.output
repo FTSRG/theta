@@ -1,0 +1,7 @@
+succ(n1,n2).
+succ(n1,n3).
+succ(n2,n4).
+succ(n1,n4).
+succ(n4,n5).
+succ(n2,n5).
+succ(n1,n5).

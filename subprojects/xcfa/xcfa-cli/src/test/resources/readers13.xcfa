@@ -1,0 +1,182 @@
+var x : int (0)
+main process p0 {
+    main procedure mainProcedure (){
+        var a : int
+        init loc L0
+        final loc Lf
+        L0 -> Lf {
+            a := 1
+            fence
+            a -> x
+        }
+    }
+}
+process p1 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p2 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p3 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p4 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p5 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p6 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p7 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p8 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p9 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p10 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p11 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p12 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}
+process p13 {
+    main procedure mainProcedure (){
+        var a : int
+
+        init loc L0
+        final loc Lf
+
+        L0 -> Lf {
+            a <- x
+            fence
+        }
+    }
+}

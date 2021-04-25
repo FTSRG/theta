@@ -1,0 +1,43 @@
+main process locking {
+main procedure mainProc(){
+	var lock : bool
+	var old : int
+	var new : int
+	
+	init loc L0
+	loc L1
+	loc L2
+	loc L3
+	final loc L4
+	error loc ERR
+	
+	L0 -> L1 {
+		lock := false
+	}
+	
+	L1 -> ERR {
+		assume lock
+	}
+	
+	L1 -> L2 {
+		assume not lock
+		lock := true
+		old := new
+	}
+	
+	L2 -> L3 {
+		lock := false
+		new := new + 1
+	}
+	
+	L2 -> L3
+	
+	L3 -> L4 {
+		assume new = old
+	}
+	
+	L3 -> L1 {
+		assume new /= old
+	}
+}
+}
