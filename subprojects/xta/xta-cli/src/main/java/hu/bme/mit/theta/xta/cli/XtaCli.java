@@ -16,11 +16,13 @@
 package hu.bme.mit.theta.xta.cli;
 
 import java.io.*;
+import java.util.Set;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
+import hu.bme.mit.theta.analysis.algorithm.ARG;
 import hu.bme.mit.theta.analysis.algorithm.SafetyChecker;
 import hu.bme.mit.theta.analysis.algorithm.SafetyResult;
 import hu.bme.mit.theta.analysis.algorithm.SearchStrategy;
@@ -28,17 +30,24 @@ import hu.bme.mit.theta.analysis.unit.UnitPrec;
 import hu.bme.mit.theta.analysis.utils.ArgVisualizer;
 import hu.bme.mit.theta.analysis.utils.TraceVisualizer;
 import hu.bme.mit.theta.common.CliUtils;
+import hu.bme.mit.theta.common.logging.ConsoleLogger;
 import hu.bme.mit.theta.common.logging.Logger;
+import hu.bme.mit.theta.common.logging.NullLogger;
 import hu.bme.mit.theta.common.table.BasicTableWriter;
 import hu.bme.mit.theta.common.table.TableWriter;
 import hu.bme.mit.theta.common.visualization.Graph;
 import hu.bme.mit.theta.common.visualization.writer.GraphvizWriter;
+import hu.bme.mit.theta.solver.Solver;
+import hu.bme.mit.theta.solver.z3.Z3SolverFactory;
 import hu.bme.mit.theta.xta.XtaSystem;
-import hu.bme.mit.theta.xta.analysis.lazy.ClockStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.DataStrategy;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaCheckerFactory;
-import hu.bme.mit.theta.xta.analysis.lazy.LazyXtaStatistics;
+import hu.bme.mit.theta.xta.analysis.XtaAction;
+import hu.bme.mit.theta.xta.analysis.XtaState;
+import hu.bme.mit.theta.xta.analysis.lazy.*;
 import hu.bme.mit.theta.xta.dsl.XtaDslManager;
+import hu.bme.mit.theta.xta.testgen.XtaTest;
+import hu.bme.mit.theta.xta.testgen.XtaTestGenerator;
+import hu.bme.mit.theta.xta.testgen.XtaTestPrinter;
+import hu.bme.mit.theta.xta.testgen.XtaTestVisualizer;
 
 public final class XtaCli {
 	private static final String JAR_NAME = "theta-xta.jar";
@@ -72,6 +81,17 @@ public final class XtaCli {
 	@Parameter(names = "--version", description = "Display version", help = true)
 	boolean versionInfo = false;
 
+	@Parameter(names = {"--testgen", "-t"}, description = "Generate tests to all locations")
+	boolean testGeneration = false;
+
+	@Parameter(names = {"--testvis", "-tv"}, description = "Visualize generated tests")
+	boolean testVisualization = false;
+
+	@Parameter(names = "--loglevel", description = "Detailedness of logging")
+	Logger.Level logLevel = Logger.Level.SUBSTEP;
+
+	private Logger logger;
+
 	public XtaCli(final String[] args) {
 		this.args = args;
 		this.writer = new BasicTableWriter(System.out, ",", "\"", "\"");
@@ -85,6 +105,7 @@ public final class XtaCli {
 	private void run() {
 		try {
 			JCommander.newBuilder().addObject(this).programName(JAR_NAME).build().parse(args);
+			logger = benchmarkMode ? NullLogger.getInstance() : new ConsoleLogger(logLevel);
 		} catch (final ParameterException ex) {
 			System.out.println("Invalid parameters, details:");
 			System.out.println(ex.getMessage());
@@ -93,7 +114,11 @@ public final class XtaCli {
 		}
 
 		if (headerOnly) {
-			LazyXtaStatistics.writeHeader(writer);
+			if (testGeneration) {
+				LazyXtaTestgenStatistics.writeHeader(writer);
+			} else {
+				LazyXtaStatistics.writeHeader(writer);
+			}
 			return;
 		}
 
@@ -104,10 +129,29 @@ public final class XtaCli {
 
 		try {
 			final XtaSystem system = loadModel();
-			final SafetyChecker<?, ?, UnitPrec> checker = LazyXtaCheckerFactory.create(system, dataStrategy,
-					clockStrategy, searchStrategy);
-			final SafetyResult<?, ?> result = check(checker);
-			printResult(result);
+			final SafetyChecker<? extends XtaState<?>, ? extends XtaAction, UnitPrec> checker =
+					LazyXtaCheckerFactory.create(system, dataStrategy, clockStrategy, searchStrategy);
+			final SafetyResult<? extends XtaState<?>, ? extends XtaAction> result = check(checker);
+			if (testGeneration) {
+				ARG<? extends XtaState<?>, ? extends XtaAction> arg = result.getArg();
+				LazyXtaStatistics stats = (LazyXtaStatistics) result.getStats().get();
+				Solver solver = Z3SolverFactory.getInstance().createSolver();
+				XtaTestGenerator<? extends XtaState<?>, ? extends XtaAction> testGenerator =
+						new XtaTestGenerator<>(arg, system, solver, logger, stats);
+				Set<? extends XtaTest<?, ?>> tests = testGenerator.generateTests();
+				if (testVisualization) {
+					visualizeTests(tests);
+				}
+				LazyXtaTestgenStatistics testgenStats = testGenerator.getStats();
+				if (benchmarkMode) {
+					testgenStats.writeData(writer);
+				} else {
+					printTests(tests);
+					System.out.println(testgenStats.toString());
+				}
+			} else {
+				printResult(result);
+			}
 			if (dotfile != null) {
 				writeVisualStatus(result, dotfile);
 			}
@@ -117,7 +161,8 @@ public final class XtaCli {
 		}
 	}
 
-	private SafetyResult<?, ?> check(SafetyChecker<?, ?, UnitPrec> checker) throws Exception {
+	private SafetyResult<? extends XtaState<?>, ? extends XtaAction>
+			check(SafetyChecker<? extends XtaState<?>, ? extends XtaAction, UnitPrec> checker) throws Exception {
 		try {
 			return checker.check(UnitPrec.getInstance());
 		} catch (final Exception ex) {
@@ -168,6 +213,14 @@ public final class XtaCli {
 		final Graph graph = status.isSafe() ? ArgVisualizer.getDefault().visualize(status.asSafe().getArg())
 				: TraceVisualizer.getDefault().visualize(status.asUnsafe().getTrace());
 		GraphvizWriter.getInstance().writeFile(graph, filename);
+	}
+
+	private void printTests(Set<? extends XtaTest<?, ?>> tests) {
+		XtaTestPrinter.printTests(tests, logger);
+	}
+
+	private void visualizeTests(Set<? extends XtaTest<?, ?>> tests) {
+		XtaTestVisualizer.visualizeTests(tests);
 	}
 
 }

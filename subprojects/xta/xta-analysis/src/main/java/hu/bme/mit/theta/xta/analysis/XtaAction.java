@@ -56,7 +56,7 @@ import static hu.bme.mit.theta.xta.Sync.Kind.EMIT;
 
 public abstract class XtaAction extends StmtAction {
 
-	private static final VarDecl<RatType> DELAY = Var("_delay", Rat());
+	public static final VarDecl<RatType> DELAY = Var("_delay", Rat());
 
 	private final Collection<VarDecl<RatType>> clockVars;
 	private final List<Loc> sourceLocs;

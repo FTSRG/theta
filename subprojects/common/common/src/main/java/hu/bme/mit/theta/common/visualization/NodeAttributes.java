@@ -28,9 +28,10 @@ public final class NodeAttributes {
 	private final int peripheries;
 	private final Shape shape;
 	private final Alignment alignment;
+	private final boolean invisible;
 
 	private NodeAttributes(final String label, final Color lineColor, final Color fillColor, final LineStyle lineStyle,
-						   final String font, final int peripheries, final Shape shape, final Alignment alignment) {
+						   final String font, final int peripheries, final Shape shape, final Alignment alignment, final boolean invisible) {
 		this.label = checkNotNull(label);
 		this.lineColor = checkNotNull(lineColor);
 		this.fillColor = checkNotNull(fillColor);
@@ -39,6 +40,7 @@ public final class NodeAttributes {
 		this.peripheries = peripheries;
 		this.shape = checkNotNull(shape);
 		this.alignment = checkNotNull(alignment);
+		this.invisible = invisible;
 	}
 
 	public String getLabel() {
@@ -73,6 +75,8 @@ public final class NodeAttributes {
 		return alignment;
 	}
 
+	public boolean getInvisible() { return invisible; }
+
 	public static Builder builder() {
 		return new Builder();
 	}
@@ -86,6 +90,7 @@ public final class NodeAttributes {
 		private int peripheries = 1;
 		private Shape shape = Shape.ELLIPSE;
 		private Alignment alignment = Alignment.CENTER;
+		private boolean invisible = false;
 
 		public Builder label(final String label) {
 			this.label = label;
@@ -127,8 +132,13 @@ public final class NodeAttributes {
 			return this;
 		}
 
+		public Builder invisible(final boolean invisible) {
+			this.invisible = invisible;
+			return this;
+		}
+
 		public NodeAttributes build() {
-			return new NodeAttributes(label, lineColor, fillColor, lineStyle, font, peripheries, shape, alignment);
+			return new NodeAttributes(label, lineColor, fillColor, lineStyle, font, peripheries, shape, alignment, invisible);
 		}
 	}
 }

@@ -149,6 +149,10 @@ public final class GraphvizWriter extends AbstractGraphWriter {
 		}
 		style += "filled";
 
+		if (attributes.getInvisible()) {
+			style = "invis," + style;
+		}
+
 		sb.append("\t\t").append(node.getId());
 		sb.append(" [label=\"").append(convertLabel(attributes.getLabel(), attributes.getAlignment())).append('\"');
 		if (attributes.getPeripheries() > 1) {
